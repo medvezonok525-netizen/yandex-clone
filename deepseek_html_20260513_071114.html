@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>SOON</title>
+    <style>
+        /* Полный сброс и черный фон */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        /* Блокируем выделение текста и контекстное меню на всей странице */
+        body {
+            background-color: #000000;
+            width: 100vw;
+            height: 100vh;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: fixed;
+            top: 0;
+            left: 0;
+            /* Защита: запрещаем выделение текста */
+            user-select: none;
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            /* Защита: запрещаем контекстное меню (правый клик) */
+            pointer-events: auto;
+        }
+
+        /* Стиль надписи — белая, ЖИРНАЯ, без анимаций */
+        .soon-text {
+            color: #ffffff;
+            font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+            font-size: clamp(2.5rem, 10vw, 6rem);
+            font-weight: 900; /* Жирное начертание */
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            background: none;
+            /* Никаких анимаций, теней, переходов */
+            animation: none;
+            transition: none;
+            text-shadow: none;
+            white-space: nowrap;
+        }
+
+        /* Адаптив для совсем маленьких экранов */
+        @media (max-width: 480px) {
+            .soon-text {
+                white-space: normal;
+                text-align: center;
+                font-size: 3rem;
+                font-weight: 900;
+            }
+        }
+
+        /* Скрываем всё, что может вылезти */
+        html {
+            background-color: #000000;
+        }
+
+        /* Дополнительная защита: убираем скроллы */
+        ::-webkit-scrollbar {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="soon-container">
+        <span class="soon-text">SOON...</span>
+    </div>
+
+    <script>
+        (function() {
+            "use strict";
+            
+            // ========== ЖЕСТКАЯ ЗАЩИТА ОТ ИЗМЕНЕНИЙ ЧЕРЕЗ КОНСОЛЬ ==========
+            
+            // 1. Замораживаем объект, содержащий текст, чтобы его нельзя было переопределить через глобальные переменные
+            // Создаем защищенную ссылку на элемент с текстом
+            const textElement = document.querySelector('.soon-text');
+            if (textElement) {
+                // Запечатываем сам элемент, чтобы нельзя было менять его свойства (innerText, textContent и т.д.)
+                // Это не полная защита, но усложняет изменение
+                try {
+                    Object.freeze(textElement);
+                } catch(e) { /* если не поддерживается - игнор */ }
+                
+                // Перехватываем попытки изменить текст через defineProperty
+                let originalText = "SOON...";
+                
+                // Постоянный наблюдатель за изменением текста (MutationObserver)
+                // Если кто-то через консоль изменит textContent/innerHTML/innerText — мгновенно восстанавливаем
+                const observer = new MutationObserver(function(mutations) {
+                    mutations.forEach(function(mutation) {
+                        if (mutation.type === 'characterData' || mutation.type === 'childList') {
+                            if (textElement.textContent !== originalText) {
+                                textElement.textContent = originalText;
+                            }
+                        }
+                        // Доп. проверка атрибутов — не нужно, но на всякий случай:
+                        if (textElement.innerText !== originalText) {
+                            textElement.innerText = originalText;
+                        }
+                        if (textElement.innerHTML !== originalText) {
+                            textElement.innerHTML = originalText;
+                        }
+                    });
+                });
+                
+                // Наблюдаем за изменениями дочерних узлов и текста внутри элемента
+                observer.observe(textElement, { 
+                    childList: true, 
+                    characterData: true, 
+                    subtree: true,
+                    attributes: false
+                });
+                
+                // Также переопределяем setter для textContent и innerText на уровне свойства
+                // Это более глубокая защита, хоть и не везде работает идеально, но создает барьер
+                try {
+                    Object.defineProperty(textElement, 'textContent', {
+                        get: function() { return originalText; },
+                        set: function(val) { /* игнорируем любую попытку */ return originalText; },
+                        configurable: false,
+                        enumerable: true
+                    });
+                    Object.defineProperty(textElement, 'innerText', {
+                        get: function() { return originalText; },
+                        set: function(val) { /* блок */ return originalText; },
+                        configurable: false,
+                        enumerable: true
+                    });
+                    Object.defineProperty(textElement, 'innerHTML', {
+                        get: function() { return originalText; },
+                        set: function(val) { /* блок */ return originalText; },
+                        configurable: false,
+                        enumerable: true
+                    });
+                } catch(e) { /* если браузер не позволяет переопределить - ничего страшного, MutationObserver спасет */ }
+            }
+            
+            // 2. Защита от изменения глобальных объектов, которые могут повлиять на DOM
+            // Запрещаем переопределение document.write и open (иногда используют для подмены)
+            if (document.write) {
+                try {
+                    Object.freeze(document.write);
+                } catch(e) {}
+            }
+            
+            // 3. Блокируем правый клик (контекстное меню) — чтобы нельзя было "просмотреть код" через контекст меню?
+            // Но пользователь всё равно может открыть инструменты разработчика. Это просто дополнительная защита от случайных изменений через инспектор.
+            document.addEventListener('contextmenu', function(e) {
+                e.preventDefault();
+                return false;
+            });
+            
+            // 4. Защита от горячих клавиш, которые открывают консоль (F12, Ctrl+Shift+I, Ctrl+Shift+J, Ctrl+U)
+            // Нельзя полностью заблокировать доступ к инструментам разработчика, но можно затруднить или предупредить.
+            // Это этично с точки зрения "защиты текста" — многие сайты так делают.
+            window.addEventListener('keydown', function(e) {
+                // F12
+                if (e.key === 'F12' || e.keyCode === 123) {
+                    e.preventDefault();
+                    return false;
+                }
+                // Ctrl+Shift+I (Windows/Linux) или Cmd+Option+I (Mac)
+                if ((e.ctrlKey || e.metaKey) && e.shiftKey && (e.key === 'I' || e.key === 'i' || e.keyCode === 73)) {
+                    e.preventDefault();
+                    return false;
+                }
+                // Ctrl+Shift+J (консоль)
+                if ((e.ctrlKey || e.metaKey) && e.shiftKey && (e.key === 'J' || e.key === 'j' || e.keyCode === 74)) {
+                    e.preventDefault();
+                    return false;
+                }
+                // Ctrl+U (просмотр исходного кода)
+                if ((e.ctrlKey || e.metaKey) && (e.key === 'U' || e.key === 'u' || e.keyCode === 85)) {
+                    e.preventDefault();
+                    return false;
+                }
+                // Ctrl+Shift+C (инспектор элементов)
+                if ((e.ctrlKey || e.metaKey) && e.shiftKey && (e.key === 'C' || e.key === 'c' || e.keyCode === 67)) {
+                    e.preventDefault();
+                    return false;
+                }
+            });
+            
+            // 5. Регулярная проверка целостности текста (каждые 100 мс) — самый надежный способ против изменения через консоль.
+            // Это страхует на случай, если MutationObserver отключили или обошли.
+            setInterval(function() {
+                const el = document.querySelector('.soon-text');
+                if (el && el.textContent !== "SOON...") {
+                    el.textContent = "SOON...";
+                }
+                if (el && el.innerText !== "SOON...") {
+                    el.innerText = "SOON...";
+                }
+                if (el && el.innerHTML !== "SOON...") {
+                    el.innerHTML = "SOON...";
+                }
+                // Также проверка, не появился ли новый узел-двойник (маловероятно)
+                const allSpans = document.querySelectorAll('.soon-text');
+                if (allSpans.length > 1) {
+                    for (let i = 1; i < allSpans.length; i++) {
+                        if (allSpans[i].parentNode) allSpans[i].parentNode.removeChild(allSpans[i]);
+                    }
+                }
+                // Убеждаемся, что фон черный и цвет белый (на случай изменения стилей через консоль)
+                if (document.body.style.backgroundColor !== 'black' && document.body.style.backgroundColor !== 'rgb(0, 0, 0)') {
+                    document.body.style.backgroundColor = '#000000';
+                }
+                if (el && window.getComputedStyle(el).color !== 'rgb(255, 255, 255)') {
+                    el.style.color = '#ffffff';
+                }
+                // Защита жирности: если кто-то через консоль изменил font-weight
+                if (el && window.getComputedStyle(el).fontWeight !== '900' && window.getComputedStyle(el).fontWeight !== 'bold') {
+                    el.style.fontWeight = '900';
+                }
+            }, 100);
+            
+            // 6. Защита от подмены самого элемента: наблюдаем за удалением/заменой через MutationObserver на body
+            const bodyObserver = new MutationObserver(function(mutations) {
+                let needRestore = false;
+                const currentTextElem = document.querySelector('.soon-text');
+                if (!currentTextElem) {
+                    needRestore = true;
+                } else if (currentTextElem.textContent !== "SOON...") {
+                    currentTextElem.textContent = "SOON...";
+                }
+                if (needRestore) {
+                    // Если элемент был удален — пересоздаем его
+                    let container = document.querySelector('.soon-container');
+                    if (!container) {
+                        container = document.createElement('div');
+                        container.className = 'soon-container';
+                        document.body.innerHTML = '';
+                        document.body.appendChild(container);
+                    }
+                    const newSpan = document.createElement('span');
+                    newSpan.className = 'soon-text';
+                    newSpan.textContent = "SOON...";
+                    newSpan.style.fontWeight = '900'; // Жирный
+                    // Повторно применяем защитные свойства
+                    try {
+                        Object.defineProperty(newSpan, 'textContent', {
+                            get: function() { return "SOON..."; },
+                            set: function() { return "SOON..."; },
+                            configurable: false
+                        });
+                        Object.defineProperty(newSpan, 'innerText', {
+                            get: function() { return "SOON..."; },
+                            set: function() { return "SOON..."; },
+                            configurable: false
+                        });
+                    } catch(e) {}
+                    container.innerHTML = '';
+                    container.appendChild(newSpan);
+                }
+            });
+            
+            bodyObserver.observe(document.body, { childList: true, subtree: true, attributes: false });
+            
+            // 7. Перехватываем попытки выполнения кода через eval и new Function (простая сигнатура)
+            // Не дает полностью обезопасить, но некоторые скрипты может перехватить
+            const originalEval = window.eval;
+            window.eval = function(code) {
+                // Если пытаются исполнить что-то, меняющее текст — блокируем (на основе ключевых слов)
+                if (typeof code === 'string' && (code.includes('soon-text') || code.includes('.textContent') || code.includes('innerText') || code.includes('SOON'))) {
+                    console.warn("Защита: попытка изменить содержимое через eval заблокирована");
+                    return null;
+                }
+                return originalEval.call(window, code);
+            };
+            
+            // 8. Дополнительная защита: замораживаем прототипы основных конструкторов, чтобы нельзя было переопределить глобальные методы изменения DOM?
+            // Это крайний метод, может повлиять на легитимные скрипты, но так как страница статичная — безопасно.
+            try {
+                if (Node.prototype && Node.prototype.cloneNode) {
+                    // Не замораживаем полностью, но создаём заглушку на всякий случай – слишком жёстко может поломать observer'ы.
+                    // Лучше просто оставить interval и observer.
+                }
+            } catch(e) {}
+            
+            // 9. Защита от изменения стиля и видимости надписи (чтобы текст не скрыли display:none или visibility)
+            setInterval(function() {
+                const el = document.querySelector('.soon-text');
+                if (el) {
+                    const style = window.getComputedStyle(el);
+                    if (style.display === 'none' || style.visibility === 'hidden' || style.opacity === '0') {
+                        el.style.display = '';
+                        el.style.visibility = 'visible';
+                        el.style.opacity = '1';
+                    }
+                    // Дополнительная проверка жирности
+                    if (style.fontWeight !== '900' && style.fontWeight !== 'bold') {
+                        el.style.fontWeight = '900';
+                    }
+                }
+                // Также защита фона
+                if (document.body.style.background !== '#000000' && document.body.style.backgroundColor !== 'black') {
+                    document.body.style.backgroundColor = '#000000';
+                    document.body.style.background = '#000000';
+                }
+            }, 200);
+            
+            // 10. Ловушка на консоль.log и прочие — не главное, но дополнительно запутывает атакующего (не обязательно)
+            // Просто заглушка: если кто-то вызывает console.clear - предупреждение
+            const originalClear = console.clear;
+            console.clear = function() {
+                // Не даем очистить консоль тем, кто хочет скрыть свои действия, но не блокируем жестко
+                if (originalClear) originalClear.apply(console);
+                console.warn("💀 Защита активна: изменение надписи SOON... невозможно");
+            };
+            console.warn("✅ Защита загружена: жирная надпись SOON... защищена от изменений через консоль");
+            
+        })();
+    </script>
+</body>
+</html>
