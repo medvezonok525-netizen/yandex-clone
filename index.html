@@ -2,324 +2,578 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>SOON</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TabBrowser Pro — Bing + часы</title>
     <style>
-        /* Полный сброс и черный фон */
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
+            font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
         }
 
-        /* Блокируем выделение текста и контекстное меню на всей странице */
         body {
-            background-color: #000000;
-            width: 100vw;
+            background: #0a0a0f;
             height: 100vh;
+            display: flex;
+            flex-direction: column;
             overflow: hidden;
+        }
+
+        /* Вкладки */
+        .tabs-bar {
+            background: #15151d;
             display: flex;
             align-items: center;
-            justify-content: center;
-            position: fixed;
-            top: 0;
-            left: 0;
-            /* Защита: запрещаем выделение текста */
-            user-select: none;
-            -webkit-user-select: none;
-            -moz-user-select: none;
-            -ms-user-select: none;
-            /* Защита: запрещаем контекстное меню (правый клик) */
-            pointer-events: auto;
+            padding: 8px 12px 0 12px;
+            gap: 8px;
+            border-bottom: 1px solid #2a2a35;
+            overflow-x: auto;
+            flex-shrink: 0;
         }
 
-        /* Стиль надписи — белая, ЖИРНАЯ, без анимаций */
-        .soon-text {
-            color: #ffffff;
-            font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
-            font-size: clamp(2.5rem, 10vw, 6rem);
-            font-weight: 900; /* Жирное начертание */
-            letter-spacing: 0.1em;
-            text-transform: uppercase;
-            background: none;
-            /* Никаких анимаций, теней, переходов */
-            animation: none;
-            transition: none;
-            text-shadow: none;
+        .tabs-container {
+            display: flex;
+            gap: 6px;
+            flex: 1;
+            overflow-x: auto;
+        }
+
+        .tab {
+            background: #20202a;
+            border-radius: 12px 12px 0 0;
+            padding: 8px 12px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            cursor: pointer;
             white-space: nowrap;
+            min-width: 130px;
+            max-width: 200px;
+            border: 1px solid #353540;
+            border-bottom: none;
         }
 
-        /* Адаптив для совсем маленьких экранов */
-        @media (max-width: 480px) {
-            .soon-text {
-                white-space: normal;
-                text-align: center;
-                font-size: 3rem;
-                font-weight: 900;
-            }
+        .tab.active {
+            background: #2a2a38;
+            border-color: #4f46e5;
+            box-shadow: 0 -2px 0 #4f46e5 inset;
         }
 
-        /* Скрываем всё, что может вылезти */
-        html {
-            background-color: #000000;
+        .tab-title {
+            color: #e2e2ea;
+            font-size: 13px;
+            font-weight: 500;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
 
-        /* Дополнительная защита: убираем скроллы */
-        ::-webkit-scrollbar {
-            display: none;
+        .tab-close {
+            background: none;
+            border: none;
+            color: #999;
+            font-size: 16px;
+            cursor: pointer;
+            padding: 2px 6px;
+            border-radius: 6px;
+        }
+
+        .tab-close:hover {
+            background: #4a4a5a;
+            color: white;
+        }
+
+        .new-tab-btn {
+            background: #252530;
+            border: none;
+            color: white;
+            font-size: 24px;
+            width: 38px;
+            height: 38px;
+            border-radius: 12px;
+            cursor: pointer;
+        }
+
+        /* Навбар */
+        .nav-bar {
+            background: #15151d;
+            padding: 10px 16px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+            flex-shrink: 0;
+        }
+
+        .nav-controls {
+            display: flex;
+            gap: 8px;
+        }
+
+        .nav-btn {
+            background: #252530;
+            border: none;
+            color: white;
+            width: 36px;
+            height: 36px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 18px;
+        }
+
+        .url-bar {
+            flex: 1;
+            display: flex;
+            gap: 8px;
+            background: #0a0a0f;
+            border-radius: 40px;
+            padding: 4px 6px 4px 18px;
+            border: 1px solid #353540;
+        }
+
+        .url-input {
+            flex: 1;
+            background: transparent;
+            border: none;
+            color: #f0f0f0;
+            font-size: 14px;
+            padding: 8px 0;
+            outline: none;
+        }
+
+        .go-btn {
+            background: #4f46e5;
+            border: none;
+            color: white;
+            padding: 6px 20px;
+            border-radius: 30px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .external-btn {
+            background: #2d2d3a;
+            border: none;
+            color: #ddd;
+            padding: 6px 16px;
+            border-radius: 30px;
+            cursor: pointer;
+            font-size: 13px;
+        }
+
+        .viewer {
+            flex: 1;
+            background: white;
+            position: relative;
+        }
+
+        iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+
+        /* Домашняя страница с часами */
+        .home-page {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(145deg, #f8fafc, #eef2ff);
+        }
+
+        .clock {
+            font-size: 110px;
+            font-weight: 800;
+            font-family: 'Courier New', monospace;
+            background: linear-gradient(135deg, #1e1b4b, #312e81);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            letter-spacing: 8px;
+            margin-bottom: 40px;
+        }
+
+        .search-panel {
+            display: flex;
+            gap: 12px;
+            width: 500px;
+            max-width: 80vw;
+            background: white;
+            padding: 8px 16px;
+            border-radius: 60px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            border: 1px solid #cbd5e1;
+        }
+
+        .search-panel input {
+            flex: 1;
+            border: none;
+            padding: 14px 8px;
+            font-size: 16px;
+            outline: none;
+            background: transparent;
+        }
+
+        .search-panel button {
+            background: #0f172a;
+            color: white;
+            border: none;
+            padding: 0 28px;
+            border-radius: 40px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .error-box {
+            text-align: center;
+            color: #991b1b;
+            background: #fee2e2;
+            padding: 20px;
+            margin: 30px;
+            border-radius: 20px;
         }
     </style>
 </head>
 <body>
-    <div class="soon-container">
-        <span class="soon-text">SOON...</span>
-    </div>
 
-    <script>
-        (function() {
-            "use strict";
+<div class="tabs-bar">
+    <div class="tabs-container" id="tabsContainer"></div>
+    <button class="new-tab-btn" id="newTabBtn">+</button>
+</div>
+
+<div class="nav-bar">
+    <div class="nav-controls">
+        <button class="nav-btn" id="backBtn">◀</button>
+        <button class="nav-btn" id="forwardBtn">▶</button>
+        <button class="nav-btn" id="reloadBtn">⟳</button>
+    </div>
+    <div class="url-bar">
+        <input type="text" id="urlInput" class="url-input" placeholder="Введите URL или поиск (Bing)">
+        <button class="go-btn" id="goBtn">Перейти</button>
+    </div>
+    <button class="external-btn" id="externalBtn">🌐 Открыть в системе</button>
+</div>
+
+<div class="viewer" id="viewerContainer"></div>
+
+<script>
+    // ========== БАЗА ДАННЫХ ==========
+    let tabs = [];
+    let activeId = null;
+    let iframeCache = new Map();
+
+    function uid() {
+        return Date.now() + '-' + Math.random().toString(36).substr(2, 8);
+    }
+
+    // === ПОИСКОВИК BING (работает в iframe 100%) ===
+    function smartUrl(raw) {
+        let str = raw.trim();
+        if (!str) return "https://www.bing.com";
+        if (str.startsWith("http://") || str.startsWith("https://")) return str;
+        if (str.includes(".") && !str.includes(" ")) return "https://" + str;
+        // Поиск через Bing
+        return "https://www.bing.com/search?q=" + encodeURIComponent(str);
+    }
+
+    // === СОЗДАТЬ ДОМАШНЮЮ СТРАНИЦУ (часы по центру) ===
+    function buildHomeScreen(tabId) {
+        const container = document.createElement('div');
+        container.className = 'home-page';
+        container.id = `home_${tabId}`;
+        
+        const updateTime = () => {
+            const now = new Date();
+            const hour = now.getHours().toString().padStart(2, '0');
+            const minute = now.getMinutes().toString().padStart(2, '0');
+            const timeStr = `${hour}:${minute}`;
+            const clockDiv = container.querySelector('.clock');
+            if (clockDiv) clockDiv.textContent = timeStr;
+        };
+        
+        container.innerHTML = `
+            <div class="clock">--:--</div>
+            <div class="search-panel">
+                <input type="text" id="homeInput_${tabId}" placeholder="Поиск в Bing или введите URL...">
+                <button id="homeGo_${tabId}">🔍 Открыть</button>
+            </div>
+            <div style="margin-top: 35px; font-size: 14px; color:#475569;">⚡ Вкладки сохраняются | Bing работает без блокировок</div>
+        `;
+        
+        updateTime();
+        const interval = setInterval(() => {
+            const stillHome = tabs.find(t => t.id === tabId)?.isHome === true;
+            if (stillHome && document.getElementById(`home_${tabId}`)) updateTime();
+            else clearInterval(interval);
+        }, 60000);
+        
+        const input = container.querySelector(`#homeInput_${tabId}`);
+        const btn = container.querySelector(`#homeGo_${tabId}`);
+        const goAction = () => {
+            let val = input.value.trim();
+            if (!val) return;
+            const final = smartUrl(val);
+            changeTabToUrl(tabId, final);
+        };
+        btn.addEventListener('click', goAction);
+        input.addEventListener('keypress', (e) => { if (e.key === 'Enter') goAction(); });
+        
+        return { container, intervalId: interval };
+    }
+    
+    // === ПЕРЕХОД ПО URL (убирает home экран) ===
+    function changeTabToUrl(tabId, url) {
+        const tab = tabs.find(t => t.id === tabId);
+        if (!tab) return;
+        const targetUrl = smartUrl(url);
+        tab.url = targetUrl;
+        tab.isHome = false;
+        // Заголовок для вкладки
+        try {
+            let host = new URL(targetUrl).hostname.replace(/^www\./, '');
+            tab.title = host.length > 28 ? host.slice(0,25)+'...' : host;
+        } catch(e) { tab.title = "Страница"; }
+        
+        renderTabContent(tabId);
+        renderTabsList();
+        if (activeId === tabId) syncUrlBar();
+        saveTabs();
+    }
+    
+    // === ОТРИСОВКА iframe или домашки ===
+    function renderTabContent(tabId) {
+        const tab = tabs.find(t => t.id === tabId);
+        if (!tab) return;
+        
+        // Почистить старый фрейм
+        const old = iframeCache.get(tabId);
+        if (old && old.parentNode) old.remove();
+        
+        if (activeId === tabId) {
+            viewerContainer.innerHTML = '';
+        }
+        
+        if (tab.isHome) {
+            const homeData = buildHomeScreen(tabId);
+            if (activeId === tabId) viewerContainer.appendChild(homeData.container);
+            iframeCache.set(tabId, null);
+            if (tab._interval) clearInterval(tab._interval);
+            tab._interval = homeData.intervalId;
+        } else {
+            const iframe = document.createElement('iframe');
+            iframe.sandbox = "allow-same-origin allow-scripts allow-popups allow-forms allow-modals allow-top-navigation allow-downloads allow-storage-access-by-user-activation";
+            iframe.src = tab.url;
+            iframe.allow = "fullscreen";
             
-            // ========== ЖЕСТКАЯ ЗАЩИТА ОТ ИЗМЕНЕНИЙ ЧЕРЕЗ КОНСОЛЬ ==========
+            iframe.onerror = () => {
+                if (activeId === tabId && iframe.parentNode) {
+                    const errDiv = document.createElement('div');
+                    errDiv.className = 'error-box';
+                    errDiv.innerHTML = '❌ Сайт не загрузился.<br> Многие сайты блокируют встраивание. Нажмите "Открыть в системе" →';
+                    iframe.style.display = 'none';
+                    iframe.parentNode?.appendChild(errDiv);
+                }
+            };
             
-            // 1. Замораживаем объект, содержащий текст, чтобы его нельзя было переопределить через глобальные переменные
-            // Создаем защищенную ссылку на элемент с текстом
-            const textElement = document.querySelector('.soon-text');
-            if (textElement) {
-                // Запечатываем сам элемент, чтобы нельзя было менять его свойства (innerText, textContent и т.д.)
-                // Это не полная защита, но усложняет изменение
-                try {
-                    Object.freeze(textElement);
-                } catch(e) { /* если не поддерживается - игнор */ }
-                
-                // Перехватываем попытки изменить текст через defineProperty
-                let originalText = "SOON...";
-                
-                // Постоянный наблюдатель за изменением текста (MutationObserver)
-                // Если кто-то через консоль изменит textContent/innerHTML/innerText — мгновенно восстанавливаем
-                const observer = new MutationObserver(function(mutations) {
-                    mutations.forEach(function(mutation) {
-                        if (mutation.type === 'characterData' || mutation.type === 'childList') {
-                            if (textElement.textContent !== originalText) {
-                                textElement.textContent = originalText;
-                            }
-                        }
-                        // Доп. проверка атрибутов — не нужно, но на всякий случай:
-                        if (textElement.innerText !== originalText) {
-                            textElement.innerText = originalText;
-                        }
-                        if (textElement.innerHTML !== originalText) {
-                            textElement.innerHTML = originalText;
-                        }
-                    });
-                });
-                
-                // Наблюдаем за изменениями дочерних узлов и текста внутри элемента
-                observer.observe(textElement, { 
-                    childList: true, 
-                    characterData: true, 
-                    subtree: true,
-                    attributes: false
-                });
-                
-                // Также переопределяем setter для textContent и innerText на уровне свойства
-                // Это более глубокая защита, хоть и не везде работает идеально, но создает барьер
-                try {
-                    Object.defineProperty(textElement, 'textContent', {
-                        get: function() { return originalText; },
-                        set: function(val) { /* игнорируем любую попытку */ return originalText; },
-                        configurable: false,
-                        enumerable: true
-                    });
-                    Object.defineProperty(textElement, 'innerText', {
-                        get: function() { return originalText; },
-                        set: function(val) { /* блок */ return originalText; },
-                        configurable: false,
-                        enumerable: true
-                    });
-                    Object.defineProperty(textElement, 'innerHTML', {
-                        get: function() { return originalText; },
-                        set: function(val) { /* блок */ return originalText; },
-                        configurable: false,
-                        enumerable: true
-                    });
-                } catch(e) { /* если браузер не позволяет переопределить - ничего страшного, MutationObserver спасет */ }
-            }
+            if (activeId === tabId) viewerContainer.appendChild(iframe);
+            iframeCache.set(tabId, iframe);
             
-            // 2. Защита от изменения глобальных объектов, которые могут повлиять на DOM
-            // Запрещаем переопределение document.write и open (иногда используют для подмены)
-            if (document.write) {
+            // Пытаемся вытащить title
+            iframe.onload = () => {
                 try {
-                    Object.freeze(document.write);
+                    let newTitle = iframe.contentDocument?.title;
+                    if (newTitle && newTitle.trim() && !tab.isHome) {
+                        tab.title = newTitle.trim().slice(0, 35);
+                        renderTabsList();
+                    }
                 } catch(e) {}
-            }
-            
-            // 3. Блокируем правый клик (контекстное меню) — чтобы нельзя было "просмотреть код" через контекст меню?
-            // Но пользователь всё равно может открыть инструменты разработчика. Это просто дополнительная защита от случайных изменений через инспектор.
-            document.addEventListener('contextmenu', function(e) {
-                e.preventDefault();
-                return false;
-            });
-            
-            // 4. Защита от горячих клавиш, которые открывают консоль (F12, Ctrl+Shift+I, Ctrl+Shift+J, Ctrl+U)
-            // Нельзя полностью заблокировать доступ к инструментам разработчика, но можно затруднить или предупредить.
-            // Это этично с точки зрения "защиты текста" — многие сайты так делают.
-            window.addEventListener('keydown', function(e) {
-                // F12
-                if (e.key === 'F12' || e.keyCode === 123) {
-                    e.preventDefault();
-                    return false;
-                }
-                // Ctrl+Shift+I (Windows/Linux) или Cmd+Option+I (Mac)
-                if ((e.ctrlKey || e.metaKey) && e.shiftKey && (e.key === 'I' || e.key === 'i' || e.keyCode === 73)) {
-                    e.preventDefault();
-                    return false;
-                }
-                // Ctrl+Shift+J (консоль)
-                if ((e.ctrlKey || e.metaKey) && e.shiftKey && (e.key === 'J' || e.key === 'j' || e.keyCode === 74)) {
-                    e.preventDefault();
-                    return false;
-                }
-                // Ctrl+U (просмотр исходного кода)
-                if ((e.ctrlKey || e.metaKey) && (e.key === 'U' || e.key === 'u' || e.keyCode === 85)) {
-                    e.preventDefault();
-                    return false;
-                }
-                // Ctrl+Shift+C (инспектор элементов)
-                if ((e.ctrlKey || e.metaKey) && e.shiftKey && (e.key === 'C' || e.key === 'c' || e.keyCode === 67)) {
-                    e.preventDefault();
-                    return false;
-                }
-            });
-            
-            // 5. Регулярная проверка целостности текста (каждые 100 мс) — самый надежный способ против изменения через консоль.
-            // Это страхует на случай, если MutationObserver отключили или обошли.
-            setInterval(function() {
-                const el = document.querySelector('.soon-text');
-                if (el && el.textContent !== "SOON...") {
-                    el.textContent = "SOON...";
-                }
-                if (el && el.innerText !== "SOON...") {
-                    el.innerText = "SOON...";
-                }
-                if (el && el.innerHTML !== "SOON...") {
-                    el.innerHTML = "SOON...";
-                }
-                // Также проверка, не появился ли новый узел-двойник (маловероятно)
-                const allSpans = document.querySelectorAll('.soon-text');
-                if (allSpans.length > 1) {
-                    for (let i = 1; i < allSpans.length; i++) {
-                        if (allSpans[i].parentNode) allSpans[i].parentNode.removeChild(allSpans[i]);
-                    }
-                }
-                // Убеждаемся, что фон черный и цвет белый (на случай изменения стилей через консоль)
-                if (document.body.style.backgroundColor !== 'black' && document.body.style.backgroundColor !== 'rgb(0, 0, 0)') {
-                    document.body.style.backgroundColor = '#000000';
-                }
-                if (el && window.getComputedStyle(el).color !== 'rgb(255, 255, 255)') {
-                    el.style.color = '#ffffff';
-                }
-                // Защита жирности: если кто-то через консоль изменил font-weight
-                if (el && window.getComputedStyle(el).fontWeight !== '900' && window.getComputedStyle(el).fontWeight !== 'bold') {
-                    el.style.fontWeight = '900';
-                }
-            }, 100);
-            
-            // 6. Защита от подмены самого элемента: наблюдаем за удалением/заменой через MutationObserver на body
-            const bodyObserver = new MutationObserver(function(mutations) {
-                let needRestore = false;
-                const currentTextElem = document.querySelector('.soon-text');
-                if (!currentTextElem) {
-                    needRestore = true;
-                } else if (currentTextElem.textContent !== "SOON...") {
-                    currentTextElem.textContent = "SOON...";
-                }
-                if (needRestore) {
-                    // Если элемент был удален — пересоздаем его
-                    let container = document.querySelector('.soon-container');
-                    if (!container) {
-                        container = document.createElement('div');
-                        container.className = 'soon-container';
-                        document.body.innerHTML = '';
-                        document.body.appendChild(container);
-                    }
-                    const newSpan = document.createElement('span');
-                    newSpan.className = 'soon-text';
-                    newSpan.textContent = "SOON...";
-                    newSpan.style.fontWeight = '900'; // Жирный
-                    // Повторно применяем защитные свойства
-                    try {
-                        Object.defineProperty(newSpan, 'textContent', {
-                            get: function() { return "SOON..."; },
-                            set: function() { return "SOON..."; },
-                            configurable: false
-                        });
-                        Object.defineProperty(newSpan, 'innerText', {
-                            get: function() { return "SOON..."; },
-                            set: function() { return "SOON..."; },
-                            configurable: false
-                        });
-                    } catch(e) {}
-                    container.innerHTML = '';
-                    container.appendChild(newSpan);
-                }
-            });
-            
-            bodyObserver.observe(document.body, { childList: true, subtree: true, attributes: false });
-            
-            // 7. Перехватываем попытки выполнения кода через eval и new Function (простая сигнатура)
-            // Не дает полностью обезопасить, но некоторые скрипты может перехватить
-            const originalEval = window.eval;
-            window.eval = function(code) {
-                // Если пытаются исполнить что-то, меняющее текст — блокируем (на основе ключевых слов)
-                if (typeof code === 'string' && (code.includes('soon-text') || code.includes('.textContent') || code.includes('innerText') || code.includes('SOON'))) {
-                    console.warn("Защита: попытка изменить содержимое через eval заблокирована");
-                    return null;
-                }
-                return originalEval.call(window, code);
             };
-            
-            // 8. Дополнительная защита: замораживаем прототипы основных конструкторов, чтобы нельзя было переопределить глобальные методы изменения DOM?
-            // Это крайний метод, может повлиять на легитимные скрипты, но так как страница статичная — безопасно.
+        }
+        if (activeId === tabId) syncUrlBar();
+    }
+    
+    function syncUrlBar() {
+        const active = tabs.find(t => t.id === activeId);
+        if (!active) return;
+        if (active.isHome) {
+            urlInput.value = '';
+            urlInput.placeholder = '🏠 Домашняя страница с часами';
+        } else {
+            urlInput.value = active.url || '';
+        }
+    }
+    
+    // === ВКЛАДКИ UI ===
+    function renderTabsList() {
+        tabsContainer.innerHTML = '';
+        for (let tab of tabs) {
+            const div = document.createElement('div');
+            div.className = 'tab';
+            if (activeId === tab.id) div.classList.add('active');
+            div.innerHTML = `
+                <span class="tab-title">${escapeHtml(tab.title)}</span>
+                <button class="tab-close" data-id="${tab.id}">✕</button>
+            `;
+            div.addEventListener('click', (e) => {
+                if (e.target.classList.contains('tab-close')) return;
+                if (activeId !== tab.id) switchToTab(tab.id);
+            });
+            const closeBtn = div.querySelector('.tab-close');
+            closeBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                closeTab(tab.id);
+            });
+            tabsContainer.appendChild(div);
+        }
+        if (tabsContainer.lastChild) tabsContainer.lastChild.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+    
+    function escapeHtml(str) { return str.replace(/[&<>]/g, function(m){if(m==='&') return '&amp;'; if(m==='<') return '&lt;'; if(m==='>') return '&gt;'; return m;}); }
+    
+    function switchToTab(id) {
+        activeId = id;
+        renderTabContent(id);
+        renderTabsList();
+        syncUrlBar();
+        saveTabs();
+    }
+    
+    function closeTab(id) {
+        const idx = tabs.findIndex(t => t.id === id);
+        if (idx === -1) return;
+        if (tabs.length === 1) {
+            addNewTab(true);
+        }
+        const deadTab = tabs[idx];
+        if (deadTab._interval) clearInterval(deadTab._interval);
+        tabs = tabs.filter(t => t.id !== id);
+        iframeCache.delete(id);
+        
+        if (activeId === id) {
+            if (tabs.length) activeId = tabs[Math.min(idx, tabs.length-1)].id;
+            else addNewTab(false);
+        }
+        if (!tabs.length) addNewTab(false);
+        renderTabsList();
+        if (activeId) renderTabContent(activeId);
+        saveTabs();
+    }
+    
+    function addNewTab(save = true) {
+        const newId = uid();
+        tabs.push({
+            id: newId,
+            title: "Новая вкладка",
+            url: null,
+            isHome: true
+        });
+        activeId = newId;
+        renderTabsList();
+        renderTabContent(newId);
+        if (save) saveTabs();
+        return newId;
+    }
+    
+    // === НАВИГАЦИЯ активной вкладки ===
+    function navigateCurrent() {
+        const active = tabs.find(t => t.id === activeId);
+        if (!active) return;
+        let raw = urlInput.value.trim();
+        if (!raw) return;
+        const finalUrl = smartUrl(raw);
+        
+        if (active.isHome) {
+            changeTabToUrl(activeId, finalUrl);
+        } else {
+            active.url = finalUrl;
+            active.isHome = false;
             try {
-                if (Node.prototype && Node.prototype.cloneNode) {
-                    // Не замораживаем полностью, но создаём заглушку на всякий случай – слишком жёстко может поломать observer'ы.
-                    // Лучше просто оставить interval и observer.
-                }
-            } catch(e) {}
-            
-            // 9. Защита от изменения стиля и видимости надписи (чтобы текст не скрыли display:none или visibility)
-            setInterval(function() {
-                const el = document.querySelector('.soon-text');
-                if (el) {
-                    const style = window.getComputedStyle(el);
-                    if (style.display === 'none' || style.visibility === 'hidden' || style.opacity === '0') {
-                        el.style.display = '';
-                        el.style.visibility = 'visible';
-                        el.style.opacity = '1';
-                    }
-                    // Дополнительная проверка жирности
-                    if (style.fontWeight !== '900' && style.fontWeight !== 'bold') {
-                        el.style.fontWeight = '900';
-                    }
-                }
-                // Также защита фона
-                if (document.body.style.background !== '#000000' && document.body.style.backgroundColor !== 'black') {
-                    document.body.style.backgroundColor = '#000000';
-                    document.body.style.background = '#000000';
-                }
-            }, 200);
-            
-            // 10. Ловушка на консоль.log и прочие — не главное, но дополнительно запутывает атакующего (не обязательно)
-            // Просто заглушка: если кто-то вызывает console.clear - предупреждение
-            const originalClear = console.clear;
-            console.clear = function() {
-                // Не даем очистить консоль тем, кто хочет скрыть свои действия, но не блокируем жестко
-                if (originalClear) originalClear.apply(console);
-                console.warn("💀 Защита активна: изменение надписи SOON... невозможно");
-            };
-            console.warn("✅ Защита загружена: жирная надпись SOON... защищена от изменений через консоль");
-            
-        })();
-    </script>
+                let host = new URL(finalUrl).hostname;
+                active.title = host.replace(/^www\./, '').slice(0, 35) || "Страница";
+            } catch(e) { active.title = "Страница"; }
+            renderTabContent(activeId);
+            renderTabsList();
+            syncUrlBar();
+            saveTabs();
+        }
+    }
+    
+    function back() {
+        const ifr = iframeCache.get(activeId);
+        if (ifr && ifr.contentWindow) {
+            try { ifr.contentWindow.history.back(); } catch(e) {}
+        }
+    }
+    function forward() {
+        const ifr = iframeCache.get(activeId);
+        if (ifr && ifr.contentWindow) {
+            try { ifr.contentWindow.history.forward(); } catch(e) {}
+        }
+    }
+    function reload() {
+        const tab = tabs.find(t => t.id === activeId);
+        if (tab?.isHome) renderTabContent(activeId);
+        else {
+            const ifr = iframeCache.get(activeId);
+            if (ifr) ifr.src = ifr.src;
+            else renderTabContent(activeId);
+        }
+    }
+    
+    function openExternally() {
+        const active = tabs.find(t => t.id === activeId);
+        if (!active) return;
+        let url = active.isHome ? "https://www.bing.com" : active.url;
+        if (url) window.open(url, '_blank');
+    }
+    
+    // === LOCALSTORAGE ===
+    function saveTabs() {
+        const store = tabs.map(t => ({ id: t.id, title: t.title, url: t.url, isHome: t.isHome }));
+        localStorage.setItem('pro_browser_tabs', JSON.stringify(store));
+        localStorage.setItem('pro_browser_active', activeId);
+    }
+    
+    function loadTabs() {
+        const raw = localStorage.getItem('pro_browser_tabs');
+        if (!raw) {
+            addNewTab(false);
+            return;
+        }
+        try {
+            const parsed = JSON.parse(raw);
+            if (!parsed.length) throw new Error();
+            tabs = parsed.map(t => ({ ...t, _interval: null }));
+            const savedActive = localStorage.getItem('pro_browser_active');
+            if (tabs.some(t => t.id === savedActive)) activeId = savedActive;
+            else activeId = tabs[0].id;
+            iframeCache.clear();
+            renderTabsList();
+            renderTabContent(activeId);
+            syncUrlBar();
+        } catch(e) {
+            addNewTab(false);
+        }
+    }
+    
+    // === ПРИВЯЗКА СОБЫТИЙ ===
+    document.getElementById('goBtn').addEventListener('click', navigateCurrent);
+    document.getElementById('urlInput').addEventListener('keypress', (e) => { if(e.key === 'Enter') navigateCurrent(); });
+    document.getElementById('backBtn').addEventListener('click', back);
+    document.getElementById('forwardBtn').addEventListener('click', forward);
+    document.getElementById('reloadBtn').addEventListener('click', reload);
+    document.getElementById('newTabBtn').addEventListener('click', () => addNewTab(true));
+    document.getElementById('externalBtn').addEventListener('click', openExternally);
+    
+    // СТАРТ
+    loadTabs();
+    window.addEventListener('beforeunload', () => {
+        saveTabs();
+        for(let t of tabs) if(t._interval) clearInterval(t._interval);
+    });
+</script>
 </body>
 </html>
